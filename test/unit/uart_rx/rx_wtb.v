@@ -11,7 +11,7 @@ module uart_rx_wtb;
   wire        RX_VALID;
 
   uart_rx #(
-      .CLK_FREQ(96000),
+      .CLK_FREQ(30_000_000),
       .BAUD(9600)
   ) dut (
       .clk(CLK),

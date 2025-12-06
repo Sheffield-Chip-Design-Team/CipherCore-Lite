@@ -33,7 +33,7 @@ module uart_rx #(
   reg                 stop_bit;
   
   // oversampling parameters
-  localparam integer DIVIDER = CLK_FREQ / (BAUD);
+  localparam integer DIVIDER = (CLK_FREQ / (BAUD));
   localparam integer DIVIDER_WIDTH = $clog2(DIVIDER)+1;
 
   // oversample clock generation 
@@ -66,25 +66,25 @@ module uart_rx #(
       else if (rx_in_prog) begin
         
         sample_tick <= 0;
-        div_cnt <= div_cnt + 1;
+        div_cnt     <= div_cnt + 1;
       
         if (state == START) begin
           // verilator lint_off WIDTHEXPAND
-          if (div_cnt[DIVIDER_WIDTH-1:0] == ((DIVIDER/2)-1)) begin
+          if (div_cnt == ((DIVIDER)/2)-1) begin
             sample_tick <= 1;
-            div_cnt <= 0;
+            div_cnt     <= 0;
           end 
         end
 
         else if (state == DATA || state ==  STOP) begin
-          if (div_cnt[DIVIDER_WIDTH-1:0] == (DIVIDER-1)) begin
+          if (div_cnt == (DIVIDER-1)) begin
             sample_tick <= 1;
-            div_cnt <= 0;
+            div_cnt     <= 0;
           end
         end 
         
       end else begin
-        div_cnt <= 0;
+        div_cnt     <= 0;
         sample_tick <= 0;
       end
       
@@ -101,32 +101,32 @@ module uart_rx #(
       if (!rst_n) begin
         state <= IDLE;
         // status signals
-        rx_ready <= 1;
-        rx_in_prog <= 0;
-        rx_start <= 0;
-        bit_index <= 0;
+        rx_ready    <= 1;
+        rx_in_prog  <= 0;
+        rx_start    <= 0;
+        bit_index   <= 0;
         // data sampling signals
-        data_index <= 0;
+        data_index  <= 0;
         rx_data_buf <= 0;
       end else begin
           case (state)
             IDLE: begin
-              rx_done <= 0;
+              rx_done       <= 0;
               if (old_rx & ~rx) begin // start bit detected
-                state <= START;
-                start_bit <= rx;
-                rx_start <= 1;
-                rx_in_prog <= 1;
-                bit_index <= 0;
-                rx_ready <= 0;
+                state       <= START;
+                start_bit   <= rx;
+                rx_start    <= 1;
+                rx_in_prog  <= 1;
+                bit_index   <= 0;
+                rx_ready    <= 0;
               end else begin
-                rx_ready <= 0;
+                rx_ready    <= 0;
               end
             end
             START: begin
               rx_start <= 0;
               if (sample_tick) begin
-                state <= DATA;
+                state     <= DATA;
                 bit_index <= bit_index + 1;
               end
             end
