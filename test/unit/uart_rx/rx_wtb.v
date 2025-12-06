@@ -12,8 +12,7 @@ module uart_rx_wtb;
 
   uart_rx #(
       .CLK_FREQ(96000),
-      .BAUD(9600),
-      .OVERSAMPLE(4)
+      .BAUD(9600)
   ) dut (
       .clk(CLK),
       .rst_n(RST_N),
