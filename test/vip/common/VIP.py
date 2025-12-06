@@ -18,8 +18,8 @@ class VIP_Base():
 
     def resolve_handle(self, root, path: str):
         """
-        Given root = dut and a hierarchical path like 'module.signal',
-        return dut.module.signal
+        Given a root module and a hierarchical path like 'module.signal',
+        return the handle for tb.dut.module.signal
         """
         
         obj = root
