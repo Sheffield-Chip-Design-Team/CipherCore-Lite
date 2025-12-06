@@ -1,19 +1,19 @@
-// UART RECEIVINGr Module
-// designed to work at 9600 Baud Rate with a 50MHz Clock
+// Simple UART Receiver Module
+// Designed to work at 9600 Baud Rate with a 30MHz Clock (parameters can be adjusted)
 
 module uart_rx #(
-    parameter CLK_FREQ   = 96000,
-    parameter BAUD       = 9600,
-    parameter OVERSAMPLE = 4     // Number of samples per bit
+    parameter CLK_FREQ   = 30_000_000, // Clock frequency in Hz
+    parameter BAUD       = 9600        // Baud rate in Hz
 )(
     input  wire       clk,
     input  wire       rst_n,
     input  wire       rx,             // UART RX input line
-    output wire [7:0] rx_data,        // RECEIVINGd byte
+    output wire [7:0] rx_data,        // DATAd byte
     output wire       done,        // asserted for one cycle when a byte is received
     output wire       valid        // asserted if the received byte is valid (no framing error)
 );
-
+  
+  // internal signal to detect edges
   reg old_rx;
 
   // internal status signals
@@ -21,41 +21,34 @@ module uart_rx #(
   reg rx_in_prog;
   reg rx_done;
   reg rx_ready;
-
-  // Latch received data
   reg frame_error;
 
-
-  // data storage 
+  // frame storage 
   localparam DATA_BITS = 8;
   localparam DATA_REG_WIDTH = $clog2(DATA_BITS);
 
+  reg                 start_bit;
   reg [DATA_BITS-1:0] rx_data_reg;
   reg [DATA_BITS-1:0] rx_data_buf;  // extra bit for start and stop bit storage stop bit checking
+  reg                 stop_bit;
   
   // oversampling parameters
   localparam integer DIVIDER = CLK_FREQ / (BAUD);
-  localparam integer DIVIDER_WIDTH = $clog2(DIVIDER);
+  localparam integer DIVIDER_WIDTH = $clog2(DIVIDER)+1;
 
   // oversample clock generation 
-  reg [OVERSAMPLE-1:0] div_cnt = 0;
-  reg                  sample_tick = 0;
+  reg [DIVIDER_WIDTH-1:0] div_cnt = 0;
+  reg                     sample_tick = 0;
 
   // FSM for RX logic
   localparam IDLE       = 2'b00;
   localparam START      = 2'b01;
-  localparam RECEIVING  = 2'b10;
+  localparam DATA  = 2'b10;
   localparam STOP   = 2'b11;
 
   reg [1:0]                state       = IDLE;
   reg [DATA_REG_WIDTH:0]   bit_index   = 0;     // to count the number of bits received 
   reg [DATA_REG_WIDTH:0]   data_index  = 0;     // to count the number of bits received 
-  reg start_bit;
-  reg stop_bit;
-
-  // verilator lint_off WIDTHEXPAND
-
-  // SAMPLE COUNTER FSM
 
   // Sample tick generator
   always @(posedge clk) begin
@@ -76,14 +69,15 @@ module uart_rx #(
         div_cnt <= div_cnt + 1;
       
         if (state == START) begin
+          // verilator lint_off WIDTHEXPAND
           if (div_cnt[DIVIDER_WIDTH-1:0] == ((DIVIDER/2)-1)) begin
             sample_tick <= 1;
             div_cnt <= 0;
           end 
         end
 
-        else if (state == RECEIVING || state ==  STOP) begin
-          if (div_cnt[OVERSAMPLE-1:0] == (DIVIDER-1)) begin
+        else if (state == DATA || state ==  STOP) begin
+          if (div_cnt[DIVIDER_WIDTH-1:0] == (DIVIDER-1)) begin
             sample_tick <= 1;
             div_cnt <= 0;
           end
@@ -97,11 +91,12 @@ module uart_rx #(
     end
   end
 
-  // edge detection fo rx_start
+  // Edge detection for rx_start
   always @(posedge clk ) begin
     old_rx <= rx;
   end
 
+  // Data Sampling FSM
   always @(posedge clk) begin
       if (!rst_n) begin
         state <= IDLE;
@@ -131,19 +126,19 @@ module uart_rx #(
             START: begin
               rx_start <= 0;
               if (sample_tick) begin
-                state <= RECEIVING;
+                state <= DATA;
                 bit_index <= bit_index + 1;
               end
             end
-            RECEIVING: begin
-              if (bit_index == DATA_BITS+1) begin
-                // last data bit received
-                state <= STOP;
-              end
+            DATA: begin
               if (sample_tick & (bit_index < (DATA_BITS+1))) begin
                 rx_data_buf[data_index[DATA_REG_WIDTH-1:0]] <= rx;
                 bit_index  <= bit_index + 1;
                 data_index <= data_index + 1;
+              end
+              // last data bit received
+              if (bit_index == DATA_BITS+1) begin
+                state <= STOP;
               end
             end
             STOP: begin
@@ -162,7 +157,7 @@ module uart_rx #(
         end
       end
 
-   
+      // Latch received data and check for framing error
       always @(posedge clk) begin
         if (!rst_n) begin
           rx_data_reg <= 0;
@@ -179,10 +174,11 @@ module uart_rx #(
         end
       end
 
+  // Output assignments
   assign done = rx_done;
   assign valid = ~frame_error;
   assign rx_data = rx_data_reg;
 
-  // verilator lint_on WIDTHEXPAND      
+  // verilator lint_on WIDTHEXPAND     
 
 endmodule
