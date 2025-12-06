@@ -33,16 +33,14 @@ async def test_dut_rx(dut):
     for i in range(100):
 
         byte = random.randint(0, 255)
-        tx_Uart.log.info(f"Sending Byte {format(hex(byte))}")
         await tx_Uart.serial_write_byte(byte)
-       
-        tx_Uart.log.info(f"Transmission Complete")
+        tx_Uart.log.info(f"Sent Byte {format(hex(byte))} to DUT rx bus.")
        
         await ClockCycles(dut.CLK, random.randint(10, 50))  # Wait for some cycles to before checking
         
         assert dut.RX_VALID.value == 1, "RX_DONE not asserted"
         assert dut.RX_DATA.value.to_unsigned() == byte, f"RX Data Mismatch: Expected {format(hex(byte))}, Got {format(hex(dut.RX_DATA.value.integer))}"
         
-        dut._log.info("Byte received correctly!")
+        dut._log.info(f"Byte: {format(hex(byte))} received correctly!")
 
         await Timer(random.randint(1, 10000), unit='us')  # Random delay between packets

@@ -14,10 +14,10 @@ class UART_VIP (VIP_Base):
         super().__init__()
         
         # UART parameters
-        self.baud_rate    = 9600            # Baud rate (Bits transferred per second)
-        self.data_bits  = 8               # Number of data bits
-        self.has_parity = True            # Enable parity bit 
-        self.bit_period = (1_000_000_000) // self.baud_rate  # (in ns)
+        self.baud_rate    = 9600       # Baud rate (Bits transferred per second)
+        self.data_bits    = 8            # Number of data bits
+        self.has_parity   = True         # Enable parity bit 
+        self.bit_period   = (1_000_000_000) // self.baud_rate  # (in ns)
     
         # Connect to DUT pins
         self.tx = self.resolve_handle(dut, dut_rx_pin)
