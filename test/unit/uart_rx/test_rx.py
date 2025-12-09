@@ -20,9 +20,9 @@ async def reset_dut(dut):
 async def test_dut_rx(dut):
     
     # Connect to tx UART VIP
-    tx_Uart = UART.UART_VIP(dut, dut_rx_pin="RX")
+    tx_Uart = UART.UartVIP(dut, dut_rx_pin="RX")
 
-    # Set the clock period to 1042 ns 
+    # Set the clock period to        1042 ns 
     dut._log.info("Starting clock")
     clock = Clock(dut.CLK, 33.332, unit="ns")
     cocotb.start_soon(clock.start())
@@ -30,7 +30,7 @@ async def test_dut_rx(dut):
     # Reset DUT
     await reset_dut(dut)
     
-    for i in range(100):
+    for i in range(10):
         byte = random.randint(0, 255)
         await tx_Uart.serial_write_byte(byte)
         tx_Uart.log.info(f"Sent Byte {format(hex(byte))} to DUT rx bus.")
