@@ -15,7 +15,6 @@ class CSR_VIP (VIP_Base):
         super().__init__()
         
         # CSR parameters
-       
         # Log Setup
         self.log = logging.getLogger(f"cocotb.tb.csr_vip.{self.id}")
         self.log.setLevel("INFO") 

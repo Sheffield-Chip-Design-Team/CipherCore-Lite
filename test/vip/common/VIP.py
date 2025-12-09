@@ -4,6 +4,8 @@
 from cocotb import logging
 import logging
 
+import cocotb
+
 class VIP_Base():
 
     def __init__(self):
