@@ -8,9 +8,9 @@ module uart_rx #(
     input  wire       clk,
     input  wire       rst_n,
     input  wire       rx,             // UART RX input line
-    output wire [7:0] rx_data,        // DATAd byte
-    output wire       done,        // asserted for one cycle when a byte is received
-    output wire       valid        // asserted if the received byte is valid (no framing error)
+    output wire [7:0] rx_data,        // Received Byte read out of the receiver
+    output wire       done,           // asserted for one cycle when a byte is received
+    output wire       valid            // asserted if the received byte is valid (no framing error)
 );
   
   // internal signal to detect edges
@@ -21,6 +21,7 @@ module uart_rx #(
   reg rx_in_prog;
   reg rx_done;
   reg rx_ready;
+  reg parity_error;
   reg frame_error;
 
   // frame storage 
@@ -29,7 +30,8 @@ module uart_rx #(
 
   reg                 start_bit;
   reg [DATA_BITS-1:0] rx_data_reg;
-  reg [DATA_BITS-1:0] rx_data_buf;  // extra bit for start and stop bit storage stop bit checking
+  reg                 expected_parity;
+  reg [DATA_BITS-1:0] rx_data_buf; 
   reg                 stop_bit;
   
   // oversampling parameters
@@ -41,12 +43,13 @@ module uart_rx #(
   reg                     sample_tick = 0;
 
   // FSM for RX logic
-  localparam IDLE       = 2'b00;
-  localparam START      = 2'b01;
-  localparam DATA  = 2'b10;
-  localparam STOP   = 2'b11;
+  localparam IDLE   = 3'b000;
+  localparam START  = 3'b001;
+  localparam DATA   = 3'b010;
+  localparam PARITY = 3'b011;
+  localparam STOP   = 3'b100;
 
-  reg [1:0]                state       = IDLE;
+  reg [2:0]                state       = IDLE;
   reg [DATA_REG_WIDTH:0]   bit_index   = 0;     // to count the number of bits received 
   reg [DATA_REG_WIDTH:0]   data_index  = 0;     // to count the number of bits received 
 
@@ -76,7 +79,7 @@ module uart_rx #(
           end 
         end
 
-        else if (state == DATA || state ==  STOP) begin
+        else if (rx_in_prog) begin
           if (div_cnt == (DIVIDER-1)) begin
             sample_tick <= 1;
             div_cnt     <= 0;
@@ -106,8 +109,9 @@ module uart_rx #(
         rx_start    <= 0;
         bit_index   <= 0;
         // data sampling signals
-        data_index  <= 0;
-        rx_data_buf <= 0;
+        data_index      <= 0;
+        rx_data_buf     <= 0;
+        expected_parity <= 0;
       end else begin
           case (state)
             IDLE: begin
@@ -138,6 +142,17 @@ module uart_rx #(
               end
               // last data bit received
               if (bit_index == DATA_BITS+1) begin
+                state <= PARITY;
+                expected_parity <= ~(^rx_data_buf); // odd parity bit calculation
+              end
+            end
+            PARITY: begin
+              if (sample_tick) begin
+                bit_index <= bit_index + 1;
+                // check parity bit
+                if (rx != expected_parity) begin
+                  frame_error <= 1;
+                end
                 state <= STOP;
               end
             end
