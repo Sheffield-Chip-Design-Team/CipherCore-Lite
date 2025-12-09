@@ -3,12 +3,11 @@
 import random 
 import cocotb
 import logging
-
 from vip.common.VIP import VIP_Base 
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, Timer
 
-class UART_VIP (VIP_Base):
+class UartVIP (VIP_Base):
     
     def __init__(self, dut, dut_rx_pin="", dut_tx_pin=""):
         super().__init__()
@@ -22,11 +21,12 @@ class UART_VIP (VIP_Base):
         # Connect to DUT pins
         self.tx = self.resolve_handle(dut, dut_rx_pin)
         self.rx = self.resolve_handle(dut, dut_tx_pin)
+        print(type(self.tx.value))
         
         self.tx.value = 1  # Idle state
 
         # Log Setup
-        self.log = logging.getLogger(f"cocotb.tb.uart_vip[{self.id}]")
+        self.log = logging.getLogger(f"cocotb.tb.UartVIP[{self.id}]")
         self.log.setLevel("INFO") 
 
     async def serial_write_byte (self, data):
@@ -43,45 +43,73 @@ class UART_VIP (VIP_Base):
         for i in range(self.data_bits):
             self.tx.value = (data >> i) & 0x1
             await Timer(self.bit_period, unit='ns')
+        
+        # Parity bit 
+        if self.has_parity:
+            parity_bit = 0
+            for i in range(self.data_bits):
+                parity_bit ^= (data >> i) & 0x1
+            self.tx.value = parity_bit
+            await Timer(self.bit_period, unit='ns')
 
         # Stop bit
         self.tx.value = 1
         await Timer(self.bit_period, unit='ns')
         
 
-    async def serial_read_byte (self, data):
+    async def random_sample(self) -> int:
+        """ Introduce a random delay to simulate asynchronous sampling """   
+        delay = random.randint(1, self.bit_period - 1)
+        await Timer(delay, unit='ns')
+        rx = int(self.rx.value)
+        await Timer(self.bit_period - delay, unit='ns')
+        return rx
+    
+    async def serial_read_byte (self):
         """ monitor the RX pin """   
 
         # Wait for start bit
         while self.rx.value != 0:
             await Timer(self.bit_period // 10, unit='ns')  # Polling interval
 
+        start_bit = await self.random_sample()
+
+        self.log.info("Start bit detected")
+
         # Start bit detected
         await Timer(self.bit_period + self.bit_period // 2, unit='ns')  # Move to middle of first data bit
 
+        # Data bits
         received_data = 0
         for i in range(self.data_bits):
-            bit = self.rx.value
-            received_data |= (bit << i)
+            data_bit = await self.random_sample() 
+            received_data |= (data_bit << i)
+            await Timer(self.bit_period, unit='ns')
+
+        # Parity bit
+        if self.has_parity:
+            parity_bit = await self.random_sample() 
+            self.log.info(f"Received parity bit: 0x{parity_bit:02X}")
             await Timer(self.bit_period, unit='ns')
 
         # Stop bit
-        stop_bit = self.rx.value
-        if stop_bit != 1:
-            self.log.warning("Stop bit not detected correctly!")
-
+        stop_bit = await self.random_sample() 
+     
+        self.log.info(f"Received start bit: 0x{start_bit:01b}")
         self.log.info(f"Received data: 0x{received_data:02X}")
+        self.log.info(f"Received stop bit: 0x{stop_bit:01b}")
+        
 
 # # todo uvm style classes (transactions, sequences, drivers, monitors)
-# class Uart_Transaction:
+class Uart_Transaction:
 
-#     def __init__(self, data, timestamp=None):
-#         self.start_bit   = 0
-#         self.data        = data
-#         self.has_parity  = True
-#         self.parity_type = 'odd'
-#         self.stop_bit    = 1
-#         self.timestamp   = timestamp
-
-#     def __repr__(self):
-#         return f"<UART_TXN data=0x{self.data:02X} time={self.timestamp}>"
+    def __init__(self, data, timestamp=None):
+        self.start_bit   = 0
+        self.data        = data
+        self.has_parity  = True
+        self.parity_type = 'odd'
+        self.stop_bit    = 1
+        self.timestamp   = timestamp
+   
+    def __repr__(self):
+        return f"<UART_TXN data=0x{self.data:02X} time={self.timestamp}>"
