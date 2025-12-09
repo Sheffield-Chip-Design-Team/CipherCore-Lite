@@ -102,7 +102,6 @@ module uart_tx #(
 
   // Data Transmission FSM
   always @(posedge clk) begin
-     
       if (!rst_n) begin
         state <= IDLE;
         // status signals
@@ -168,28 +167,13 @@ module uart_tx #(
         end
       end
 
-      // Latch received data and check for framing error
-      always @(posedge clk) begin
-        if (!rst_n) begin
-          rx_data_reg <= 0;
-          frame_error <= 0;
-        end else begin
-          if (rx_done) begin
-            if (start_bit == 0 && stop_bit == 1) begin
-                rx_data_reg <= rx_data_buf;
-                frame_error <= 0;
-            end else begin   
-                frame_error <= 1;  
-            end
-          end
-        end
-      end
 
   // Output assignments
-  assign done = rx_done;
-  assign valid = ~frame_error;
-  assign rx_data = rx_data_reg;
 
+  assign tx   = tx_reg;
+  assign busy = tx_in_prog;
+  assign done = tx_done;
+  
   // verilator lint_on WIDTHEXPAND     
 
 endmodule
