@@ -43,7 +43,7 @@ module uart_tx #(
   localparam PARITY  = 3'b011;
   localparam STOP    = 3'b100;
 
-  reg [1:0]                state       = IDLE;
+  reg [2:0]                state       = IDLE;
   reg [DATA_REG_WIDTH:0]   bit_index   = 0;     // to count the number of bits received 
   reg [DATA_REG_WIDTH:0]   data_index  = 0;     // to count the number of bits received 
 
@@ -100,47 +100,48 @@ module uart_tx #(
     end
   end
 
-  // Data Transmission FSM
+  // Data Transmission FSM 
   always @(posedge clk) begin
       if (!rst_n) begin
         state <= IDLE;
         // status signals
-        tx_in_prog <= 0;
-        bit_index <= 0;
+        tx_in_prog  <= 0;
+        bit_index   <= 0;
         // data sampling signals
-        data_index <= 0;
+        data_index  <= 0;
         tx_data_reg <= 0;
+        tx_reg      <= 1; // idle state of tx line is high
       end else begin
           case (state)
             IDLE: begin
-                tx_done    <= 1;
-                tx_reg     <= 1; // idle state of tx line is high
-                tx_in_prog <= 0;
+              tx_done    <= 1;
+              tx_reg     <= 1; // idle state of tx line is high
+              tx_in_prog <= 0;
               if (tx_start) begin
-                tx_start <= 1;
                 tx_in_prog <= 1;
-                state <= START;
-                bit_index <= 0;
+                state      <= START;
+                bit_index  <= 0;
+                data_index <= 0;
               end
             end
             START: begin
-              tx_start <= 0;
-              tx_reg <= 0; // start bit
+              tx_reg      <= 0; // start bit
               if (bit_period_tick) begin
-                state <= DATA;
+                state     <= DATA;
                 bit_index <= bit_index + 1;
               end
             end
             DATA: begin
+              tx_reg  <= tx_data_reg[data_index[DATA_REG_WIDTH-1:0]];
+
               if (bit_period_tick) begin
-                bit_index  <= bit_index + 1;
+                bit_index    <= bit_index + 1;
                 // send data bits
-                if (bit_index < (DATA_BITS+1)) begin
-                  tx_reg     <= tx_data_reg[data_index[DATA_REG_WIDTH-1:0]];
+                if (bit_index < (DATA_BITS)) begin
                   data_index <= data_index + 1;
                 end
                 // last data bit received
-                if (bit_index == DATA_BITS+1) begin
+                if (bit_index == DATA_BITS) begin
                   state <= PARITY;
                 end
               end
@@ -148,16 +149,16 @@ module uart_tx #(
             PARITY: begin
               tx_reg <= parity_bit;
               if (bit_period_tick) begin
-                state  <= STOP;
+                state     <= STOP;
                 bit_index <= bit_index + 1;
               end
             end
             STOP: begin
-              tx_reg <= 1'b0; // stop bit              
+              tx_reg <= 1'b1; // stop bit              
               if (bit_period_tick) begin
-                state  <= IDLE;
+                state     <= IDLE;
                 bit_index <= bit_index + 1;
-                tx_done <= 1;
+                tx_done   <= 1;
               end
             end
             default: begin
@@ -173,7 +174,7 @@ module uart_tx #(
   assign tx   = tx_reg;
   assign busy = tx_in_prog;
   assign done = tx_done;
-  
+
   // verilator lint_on WIDTHEXPAND     
 
 endmodule
