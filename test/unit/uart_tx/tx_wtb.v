@@ -7,6 +7,7 @@ module uart_tx_wtb;
   reg         rst_n;
   reg         tx_start;
   reg  [7:0]  tx_data;
+  wire        tx; 
   wire        busy;
   wire        done;
 

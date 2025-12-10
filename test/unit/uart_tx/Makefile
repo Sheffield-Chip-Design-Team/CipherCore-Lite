@@ -16,7 +16,7 @@ VERILOG_SOURCES += $(PWD)/tx_wtb.v
 
 COMPILE_ARGS += -I$(SRC_DIR)
 
-TOPLEVEL = uart_rx_wtb
+TOPLEVEL = uart_tx_wtb
 COCOTB_TEST_MODULES = test_tx
 
 
