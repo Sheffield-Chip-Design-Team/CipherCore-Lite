@@ -3,23 +3,23 @@
 module uart_rx_wtb;
 
   // Instantiation of module uart_rx
-  reg         CLK;
-  reg         RST_N;
-  reg         RX;
-  wire  [7:0] RX_DATA;
-  wire        RX_DONE;
-  wire        RX_VALID;
+  reg         clk;
+  reg         rst_n;
+  reg         rx;
+  wire  [7:0] rx_data;
+  wire        rx_done;
+  wire        rx_valid;
 
   uart_rx #(
       .CLK_FREQ(30_000_000),
       .BAUD(9600)
   ) dut (
-      .clk(CLK),
-      .rst_n(RST_N),
-      .rx(RX),
-      .rx_data(RX_DATA),
-      .done(RX_DONE),
-      .valid(RX_VALID)
+      .clk(clk),
+      .rst_n(rst_n),
+      .rx(rx),
+      .rx_data(rx_data),
+      .done(rx_done),
+      .valid(rx_valid)
   );
 
 endmodule 
