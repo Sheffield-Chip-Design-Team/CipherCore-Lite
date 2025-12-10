@@ -50,9 +50,9 @@ async def test_dut_tx(dut):
     
     # Connect to tx UART VIP
     # Automatically set to 9600 baud and odd parity
-    tx_Uart = UART.UartVIP(dut, dut_tx_pin="tx")
-    tx_Uart.is_active = False  # Set to monitor mode
-    tx_Uart.log.setLevel(logging.INFO)
+    rx_Uart = UART.UartVIP(dut, dut_tx_pin="tx")
+    rx_Uart.is_active = False  # Set to monitor mode
+    rx_Uart.log.setLevel(logging.INFO)
 
     # Set the clock period to 1042 ns 
     dut._log.info("Starting clock")
@@ -68,7 +68,7 @@ async def test_dut_tx(dut):
         await Timer(random.randint(10, 500), unit='us')  # Random delay between sending frames
         
         data_byte            = await trigger_byte_frame(dut)
-        monitored_uart_trans = await tx_Uart.serial_read_byte()
+        monitored_uart_trans = await rx_Uart.serial_read_byte()
 
         # Check received transaction
         assert monitored_uart_trans.parity_bit == calc_parity(data_byte, monitored_uart_trans.parity_bit), "Incorrect Parity Bit Detected"
@@ -76,4 +76,4 @@ async def test_dut_tx(dut):
         assert monitored_uart_trans.start_bit == 0, "High Start Bit Detected"
         assert monitored_uart_trans.stop_bit == 1, "Low Stop Bit Detected"
 
-        dut._log.info(f"Scoreboard Correctly Received Byte: {format(hex(data_byte))}. Test {i+1}/{num_tests} Passed.")
+        dut._log.info(f"Scoreboard Correctly Received Byte: {format(hex(data_byte))}. Frame {i+1}/{num_tests} Passed.")

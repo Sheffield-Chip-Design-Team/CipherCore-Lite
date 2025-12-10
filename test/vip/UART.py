@@ -29,6 +29,7 @@ class UartVIP (VIP_Base):
         if self.is_active:
             self.tx = self.resolve_handle(dut, dut_rx_pin)
             self.tx.value = 1  # Idle state
+            self.log.info(f"UART VIP in ACTIVE mode, driving RX pin: {dut_rx_pin}")
 
         # Log Setup
         self.log = logging.getLogger(f"cocotb.tb.UartVIP[{self.id}]")
