@@ -1,4 +1,4 @@
-// Synchroinizer for asynchronous rx input
+// CDC Synchroinizer Module
 // Defaults to 2-stage synchronizer
 
 module synchronizer #(

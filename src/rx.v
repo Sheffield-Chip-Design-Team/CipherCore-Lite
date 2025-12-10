@@ -55,7 +55,6 @@ module uart_rx #(
 
   // Sample tick generator
   always @(posedge clk) begin
-
     if (!rst_n) begin
         div_cnt <= 0;
         sample_tick <= 0;
@@ -90,7 +89,6 @@ module uart_rx #(
         div_cnt     <= 0;
         sample_tick <= 0;
       end
-      
     end
   end
 
@@ -190,8 +188,8 @@ module uart_rx #(
       end
 
   // Output assignments
-  assign done = rx_done;
-  assign valid = ~frame_error;
+  assign done    = rx_done;
+  assign valid   = ~frame_error;
   assign rx_data = rx_data_reg;
 
   // verilator lint_on WIDTHEXPAND     
