@@ -13,6 +13,7 @@ class VIP_Base():
         global_vip_id       = getattr(VIP_Base, "global_id", 0)
         VIP_Base.global_id  = global_vip_id + 1
         self.id             = global_vip_id
+        self.is_active      = True        
 
         # set up logger
         self.log = logging.getLogger(f"cocotb.tb.vip.{self.id}")
