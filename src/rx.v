@@ -105,6 +105,7 @@ module uart_rx #(
         rx_ready    <= 1;
         rx_in_prog  <= 0;
         rx_start    <= 0;
+        rx_done     <= 0;
         bit_index   <= 0;
         // data sampling signals
         data_index      <= 0;
@@ -116,7 +117,6 @@ module uart_rx #(
               rx_done       <= 0;
               if (old_rx & ~rx) begin // start bit detected
                 state       <= START;
-                start_bit   <= rx;
                 rx_start    <= 1;
                 rx_in_prog  <= 1;
                 bit_index   <= 0;
@@ -128,11 +128,12 @@ module uart_rx #(
             START: begin
               rx_start <= 0;
               if (sample_tick) begin
+                start_bit <= rx;
                 state     <= DATA;
                 bit_index <= bit_index + 1;
               end
             end
-            DATA: begin
+            DATA: begin        
               if (sample_tick & (bit_index < (DATA_BITS+1))) begin
                 rx_data_buf[data_index[DATA_REG_WIDTH-1:0]] <= rx;
                 bit_index  <= bit_index + 1;
@@ -148,9 +149,9 @@ module uart_rx #(
               if (sample_tick) begin
                 bit_index <= bit_index + 1;
                 // check parity bit
-                if (rx != expected_parity) begin
-                  frame_error <= 1;
-                end
+//                if (rx != expected_parity) begin
+//                  frame_error <= 1;
+//                end
                 state <= STOP;
               end
             end
