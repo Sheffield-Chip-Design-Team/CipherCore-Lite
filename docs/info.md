@@ -9,12 +9,14 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+The CipherCore is a simple hardware encryption core implemented on an FPGA that communicates through UART and SPI interfaces. It receives plaintext data over UART, applies a lightweight encryption operation, and transmits the encrypted result back over UART. The design demonstrates reliable serial communication, data framing, parity checking, and synchronous processing using an 8-bit data path.
+
+![Block Diagram](image-1.png)
 
 ## How to test
 
-Explain how to use your project
+Send a UART frame to the chip on the rx bus (9600 baud, 8-bit data, odd parity) and monitor the tx bus to receive the encrypted data.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+NOTE: be careful to properly match voltage levels on the UART tx and rx pins.
