@@ -15,9 +15,7 @@ module CipherCore_FPGA_Top (
     // tx interface
     output reg          tx_out,
     output wire         tx_done,
-    output wire         tx_busy,
-    output wire         tx_done,
-    output wire         rx_valid
+    output wire         tx_busy
 );
 
     wire clk_30MHz;
