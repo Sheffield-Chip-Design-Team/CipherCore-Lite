@@ -69,17 +69,6 @@ module uart_tx #(
     end 
   end
 
-  // Data Buffering 
-  always @(posedge clk) begin
-    if (!rst_n) begin
-      tx_data_reg <= 0;
-    end else begin
-      if (tx_start && !tx_in_prog) begin
-        tx_data_reg <= tx_data;
-      end
-    end
-  end
-
   // Parity Calculation Trigger
  always @(posedge clk) begin
     if (!rst_n) begin
@@ -119,6 +108,7 @@ module uart_tx #(
               tx_in_prog <= 0;
               if (tx_start) begin
                 tx_in_prog <= 1;
+                tx_data_reg <= tx_data;
                 state      <= START;
                 bit_index  <= 0;
                 data_index <= 0;
