@@ -9,11 +9,11 @@ module CipherCore_FPGA_Top (
     input  wire         rst_n,
     // rx interface
     input  wire         rx_in,
-    output reg  [7:0]   rx_data,
+    output wire  [7:0]  rx_data,
     output wire         rx_done,
     output wire         rx_valid,
     // tx interface
-    output reg          tx_out,
+    output wire          tx_out,
     output wire         tx_done,
     output wire         tx_busy
 );
@@ -29,16 +29,15 @@ module CipherCore_FPGA_Top (
     CipherCore_Top ciphercore_inst (
       .clk(clk_30MHz),
       .rst_n(rst_n),
+      // rx interface
       .rx_in(rx_in),
       .rx_data(rx_data),
       .rx_done(rx_done),
       .rx_valid(rx_valid),
+      // tx interface
       .tx_out(tx_out),
       .tx_busy(tx_busy),
-      .tx_done(tx_done),
-      .rx_valid(rx_valid)
+      .tx_done(tx_done)
     );
-
-  
 
 endmodule
