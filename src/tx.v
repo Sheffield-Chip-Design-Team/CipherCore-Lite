@@ -7,11 +7,11 @@ module uart_tx #(
 )(
     input  wire       clk,
     input  wire       rst_n,
-    output wire       tx,             // UART TX pit[it] line
+    output wire       tx,             // UART TX output line
     input wire        tx_start,       // signal to start transmission of a byte
     input wire [7:0]  tx_data,        // input data to send 
     output wire       busy,           // asserted when transmitter is busy
-    output wire       done           // asserted if the received byte is valid (no framing error)
+    output wire       done            // asserted if the received byte is valid (no framing error)
 );
   
   // internal signal to detect edges
